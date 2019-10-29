@@ -4,14 +4,18 @@ import { Router } from 'express';
 // Models
 // import Student from './app/models/Student';
 import StudentController from './app/controllers/StudentController';
-
 import SessionController from './app/controllers/SessionController';
 
+import authMiddleware from './app/middlewares/authMIddleware';
+
 const routes = Router();
+routes.post('/session', SessionController.store);
+
+routes.use(authMiddleware);
 
 routes.post('/students', StudentController.store);
+routes.put('/students/:id', StudentController.update);
 
-routes.post('/session', SessionController.store);
 /*
 Lá no Insomnia
 

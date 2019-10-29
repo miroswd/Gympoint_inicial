@@ -1,36 +1,52 @@
 // Autenticação do ADM
 import jwt from 'jsonwebtoken';
-import Adm from '../models/Admin';
+import * as Yup from 'yup';
+import User from '../models/User';
+
+import authConfig from '../../config/authConfig';
 
 class SessionController {
   async store(req, res) {
+    const schema = Yup.object().shape({
+      email: Yup.string()
+        .email()
+        .required(),
+      password: Yup.string()
+        .required()
+        .min(6),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails' });
+    }
+
     // Criação da session
     const { email, password } = req.body;
 
-    const admin = await Adm.findOne({ where: { email } });
+    const user = await User.findOne({ where: { email } });
 
     // Verificando se existe o admin
-    if (!admin) {
+    if (!user) {
       return res.status(401).json({ error: 'Admin not found' });
     }
 
     // Verificação do match da password
-    if (!(await admin.checkPassword(password))) {
+    if (!(await user.checkPassword(password))) {
       return res.status(401).json({ error: 'Password does not match' });
     }
     // Se chegou até aqui os dados foram passados corretamente
 
     // Retornando informações
-    const { id, name } = admin;
+    const { id, name } = user;
 
     return res.json({
-      admin: {
+      user: {
         id,
         name,
         email,
       },
-      token: jwt.sign({ id }, '8002b8fc12616389a693e500e999a6c0', {
-        expiresIn: '7d',
+      token: jwt.sign({ id }, authConfig.secret, {
+        expiresIn: authConfig.expiresIn,
       }),
     });
   }
